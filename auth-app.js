@@ -184,6 +184,9 @@ function renderTransactionList(transactions) {
   });
 }
 
+// Pastikan expenseChartCanvas dideklarasikan di atas
+const expenseChartCanvas = document.getElementById("expense-chart");
+
 // Tambah filter UI
 document.addEventListener("DOMContentLoaded", () => {
   const chartCard = expenseChartCanvas?.closest(".bg-white");
