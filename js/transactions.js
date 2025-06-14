@@ -5,14 +5,11 @@ import {
   deleteDoc,
   doc,
   query,
-  orderBy,
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 import * as ui from "./ui.js";
-import { currentUser } from "./auth.js";
 
-let unsubscribeFromTransactions = null;
-let allTransactions = [];
+export let unsubscribeFromTransactions = null;
 
 export function setupTransactionListener(userId) {
   if (unsubscribeFromTransactions) unsubscribeFromTransactions();
@@ -21,18 +18,16 @@ export function setupTransactionListener(userId) {
   const q = query(transactionsRef);
 
   unsubscribeFromTransactions = onSnapshot(q, (querySnapshot) => {
-    allTransactions = [];
+    const transactions = [];
     querySnapshot.forEach((doc) => {
-      allTransactions.push({ id: doc.id, ...doc.data() });
+      transactions.push({ id: doc.id, ...doc.data() });
     });
-    // Urutkan di sisi client
-    allTransactions.sort(
+
+    const sortedTransactions = transactions.sort(
       (a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0)
     );
 
-    ui.renderTransactionList(allTransactions);
-    ui.updateSummary(allTransactions);
-    ui.updateExpenseChart(allTransactions);
+    ui.refreshAllViews(sortedTransactions);
   });
 
   return unsubscribeFromTransactions;
@@ -41,19 +36,15 @@ export function setupTransactionListener(userId) {
 export function initTransactionForm(userId) {
   ui.DOM.transactionForm.onsubmit = async (e) => {
     e.preventDefault();
-    if (!userId) {
-      alert("Anda harus login terlebih dahulu.");
-      return;
-    }
+    if (!userId) return alert("Anda harus login terlebih dahulu.");
+
     const keterangan = ui.DOM.keteranganInput.value.trim();
     const jumlah = parseFloat(ui.DOM.jumlahInput.value);
     const tipe = ui.DOM.tipeInput.value;
     const kategori = ui.DOM.kategoriInput.value;
 
-    if (!keterangan || isNaN(jumlah) || !tipe || !kategori) {
-      alert("Mohon lengkapi semua field.");
-      return;
-    }
+    if (!keterangan || isNaN(jumlah) || !tipe || !kategori)
+      return alert("Mohon lengkapi semua field.");
 
     try {
       const transaksiCol = collection(db, `users/${userId}/transactions`);
@@ -73,9 +64,10 @@ export function initTransactionForm(userId) {
 }
 
 export function initTransactionDeletion(userId) {
-  ui.DOM.transactionList.addEventListener("click", async (e) => {
-    if (e.target.classList.contains("remove-btn")) {
-      const id = e.target.dataset.id;
+  ui.DOM.transactionListContainer.addEventListener("click", async (e) => {
+    const removeBtn = e.target.closest(".remove-btn");
+    if (removeBtn) {
+      const id = removeBtn.dataset.id;
       if (confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) {
         try {
           const docRef = doc(db, `users/${userId}/transactions`, id);

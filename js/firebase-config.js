@@ -3,7 +3,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  // Ganti dengan kredensial Firebase Anda
+  // Kredensial Firebase Anda
   apiKey: "AIzaSyBAdKlekDsHUe1n8BL9rjxZFZjmbAh9_ro",
   authDomain: "keuangan-saya-620fd.firebaseapp.com",
   projectId: "keuangan-saya-620fd",
