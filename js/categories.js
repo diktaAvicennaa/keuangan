@@ -2,7 +2,7 @@ import {
   collection,
   addDoc,
   getDocs,
-} from "[https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js](https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js)";
+} from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 import { DOM, renderCategories } from "./ui.js";
 import { currentUser } from "./auth.js";
@@ -25,7 +25,7 @@ export function initCategoryForm() {
       const catCol = collection(db, `users/${currentUser.uid}/categories`);
       await addDoc(catCol, { name: catName });
       DOM.newCategoryInput.value = "";
-      loadCategories();
+      loadCategories(); // Muat ulang kategori setelah menambah
     } catch (error) {
       console.error("Gagal menambah kategori:", error);
       alert("Gagal menambah kategori.");
