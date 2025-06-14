@@ -37,6 +37,8 @@ const appContent = document.querySelector(".max-w-7xl");
 const loadingOverlay = document.getElementById("loading-overlay");
 const userIdDisplay = document.getElementById("user-id-display");
 
+let currentUser = null;
+
 onAuthStateChanged(auth, (user) => {
   if (loadingOverlay) loadingOverlay.style.display = "none";
   if (user) {
@@ -127,19 +129,23 @@ if (transactionForm) {
       alert("Mohon lengkapi semua field.");
       return;
     }
-    const transaksiCol = collection(
-      db,
-      `users/${currentUser.uid}/transactions`
-    );
-    await addDoc(transaksiCol, {
-      keterangan,
-      jumlah,
-      tipe,
-      kategori,
-      createdAt: new Date(),
-    });
-    transactionForm.reset();
-    alert("Transaksi berhasil ditambahkan!");
+    try {
+      const transaksiCol = collection(
+        db,
+        `users/${currentUser.uid}/transactions`
+      );
+      await addDoc(transaksiCol, {
+        keterangan,
+        jumlah,
+        tipe,
+        kategori,
+        createdAt: new Date(),
+      });
+      transactionForm.reset();
+      alert("Transaksi berhasil ditambahkan!");
+    } catch (err) {
+      alert("Gagal menambah transaksi: " + err.message);
+    }
   };
 }
 
@@ -198,6 +204,66 @@ function formatRupiah(angka) {
   }).format(angka);
 }
 
+// --- CHART.JS GRAFIK PENGELUARAN ---
+let expenseChart = null;
+const expenseChartCanvas = document.getElementById("expense-chart");
+
+function updateExpenseChart(transactions) {
+  if (!expenseChartCanvas) return;
+  // Filter hanya pengeluaran
+  const pengeluaran = transactions.filter((t) => t.tipe === "pengeluaran");
+  // Hitung total per kategori
+  const kategoriTotals = {};
+  pengeluaran.forEach((t) => {
+    kategoriTotals[t.kategori] = (kategoriTotals[t.kategori] || 0) + t.jumlah;
+  });
+  const labels = Object.keys(kategoriTotals);
+  const data = Object.values(kategoriTotals);
+  // Warna default
+  const colors = [
+    "#f87171",
+    "#fbbf24",
+    "#34d399",
+    "#60a5fa",
+    "#a78bfa",
+    "#f472b6",
+    "#facc15",
+    "#38bdf8",
+    "#818cf8",
+    "#f472b6",
+    "#fcd34d",
+    "#4ade80",
+    "#fca5a5",
+    "#c084fc",
+    "#f9a8d4",
+    "#fbbf24",
+  ];
+  if (expenseChart) {
+    expenseChart.data.labels = labels;
+    expenseChart.data.datasets[0].data = data;
+    expenseChart.update();
+  } else {
+    expenseChart = new Chart(expenseChartCanvas, {
+      type: "doughnut",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            data: data,
+            backgroundColor: colors,
+          },
+        ],
+      },
+      options: {
+        plugins: {
+          legend: { position: "bottom" },
+          title: { display: false },
+        },
+      },
+    });
+  }
+}
+
 function setupTransactionListener() {
   if (!currentUser) return;
   const transaksiCol = collection(db, `users/${currentUser.uid}/transactions`);
@@ -213,6 +279,7 @@ function setupTransactionListener() {
     );
     renderTransactionList(transactions);
     updateSummary(transactions);
+    updateExpenseChart(transactions); // update chart realtime
     // TODO: update chart jika ada
   });
 }
@@ -233,3 +300,9 @@ if (transactionList) {
     }
   });
 }
+
+// Global error handler
+window.addEventListener("error", function (e) {
+  document.body.innerHTML = `<div style='padding:2rem;color:red;font-family:monospace;'>JS Error: ${e.message}<br><br><pre>${e.filename}: ${e.lineno}</pre></div>`;
+  throw e;
+});
