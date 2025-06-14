@@ -1,0 +1,7 @@
+# Node modules (jika pakai npm)
+node_modules/
+# File konfigurasi pribadi
+.env
+# File sistem
+.DS_Store
+Thumbs.db
