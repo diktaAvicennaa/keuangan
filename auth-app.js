@@ -1,8 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
 import {
   getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
   signOut,
   onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
@@ -10,12 +10,6 @@ import {
   getFirestore,
   collection,
   addDoc,
-  onSnapshot,
-  doc,
-  deleteDoc,
-  query,
-  serverTimestamp,
-  setDoc,
   getDocs,
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
@@ -34,11 +28,7 @@ const db = getFirestore(app);
 
 // --- AUTH ---
 const authScreen = document.getElementById("auth-screen");
-const authForm = document.getElementById("auth-form");
-const emailInput = document.getElementById("auth-email");
-const passwordInput = document.getElementById("auth-password");
-const loginBtn = document.getElementById("login-btn");
-const registerBtn = document.getElementById("register-btn");
+const googleBtn = document.getElementById("login-btn");
 const logoutBtn = document.getElementById("logout-btn");
 const appContent = document.querySelector(".max-w-7xl");
 
@@ -59,28 +49,12 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-authForm.onsubmit = async (e) => {
-  e.preventDefault();
+googleBtn.onclick = async () => {
+  const provider = new GoogleAuthProvider();
   try {
-    await signInWithEmailAndPassword(
-      auth,
-      emailInput.value,
-      passwordInput.value
-    );
+    await signInWithPopup(auth, provider);
   } catch (err) {
-    alert("Login gagal: " + err.message);
-  }
-};
-registerBtn.onclick = async () => {
-  try {
-    await createUserWithEmailAndPassword(
-      auth,
-      emailInput.value,
-      passwordInput.value
-    );
-    alert("Registrasi berhasil!");
-  } catch (err) {
-    alert("Registrasi gagal: " + err.message);
+    alert("Login Google gagal: " + err.message);
   }
 };
 logoutBtn.onclick = () => signOut(auth);
