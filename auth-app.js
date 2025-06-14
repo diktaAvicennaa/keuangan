@@ -185,7 +185,10 @@ function renderTransactionList(transactions) {
 }
 
 let expenseChartCanvas;
-// Pastikan expenseChartCanvas dideklarasikan di paling atas sebelum dipakai
+
+// --- FILTER & CHART.JS GRAFIK TRANSAKSI ---
+let expenseChart = null;
+
 document.addEventListener("DOMContentLoaded", () => {
   expenseChartCanvas = document.getElementById("expense-chart");
   // --- filter grafik ---
