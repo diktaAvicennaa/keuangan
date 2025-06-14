@@ -29,6 +29,15 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Fungsi untuk memformat angka ke dalam format Rupiah
+function formatRupiah(angka) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(angka);
+}
+
 // --- AUTH ---
 const authScreen = document.getElementById("auth-screen");
 const googleBtn = document.getElementById("login-btn");
@@ -381,15 +390,6 @@ if (transactionList) {
       }
     }
   });
-}
-
-// Fungsi untuk memformat angka ke dalam format Rupiah
-function formatRupiah(angka) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(angka);
 }
 
 // Global error handler
