@@ -11,6 +11,9 @@ import {
   collection,
   addDoc,
   getDocs,
+  onSnapshot,
+  deleteDoc,
+  doc,
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -32,6 +35,7 @@ const googleBtn = document.getElementById("login-btn");
 const logoutBtn = document.getElementById("logout-btn");
 const appContent = document.querySelector(".max-w-7xl");
 const loadingOverlay = document.getElementById("loading-overlay");
+const userIdDisplay = document.getElementById("user-id-display");
 
 onAuthStateChanged(auth, (user) => {
   if (loadingOverlay) loadingOverlay.style.display = "none";
@@ -40,12 +44,19 @@ onAuthStateChanged(auth, (user) => {
     authScreen.style.display = "none";
     appContent.style.display = "";
     logoutBtn.classList.remove("hidden");
+    if (userIdDisplay) {
+      userIdDisplay.innerHTML = `ID Pengguna Anda: <span class="font-semibold">${user.uid}</span>`;
+    }
     loadCategories();
+    setupTransactionListener();
   } else {
     currentUser = null;
     authScreen.style.display = "";
     appContent.style.display = "none";
     logoutBtn.classList.add("hidden");
+    if (userIdDisplay) {
+      userIdDisplay.innerHTML = `ID Pengguna Anda: <span class=\"font-semibold\">memuat...</span>`;
+    }
   }
 });
 
@@ -93,3 +104,132 @@ addCategoryForm.onsubmit = async (e) => {
   newCategoryInput.value = "";
   loadCategories();
 };
+
+// --- FORM TRANSAKSI ---
+const transactionForm = document.getElementById("transaction-form");
+const keteranganInput = document.getElementById("keterangan");
+const jumlahInput = document.getElementById("jumlah");
+const tipeInput = document.getElementById("tipe");
+// kategoriInput sudah ada
+
+if (transactionForm) {
+  transactionForm.onsubmit = async (e) => {
+    e.preventDefault();
+    if (!currentUser) {
+      alert("Anda harus login terlebih dahulu.");
+      return;
+    }
+    const keterangan = keteranganInput.value.trim();
+    const jumlah = parseFloat(jumlahInput.value);
+    const tipe = tipeInput.value;
+    const kategori = kategoriInput.value;
+    if (!keterangan || isNaN(jumlah) || !tipe || !kategori) {
+      alert("Mohon lengkapi semua field.");
+      return;
+    }
+    const transaksiCol = collection(
+      db,
+      `users/${currentUser.uid}/transactions`
+    );
+    await addDoc(transaksiCol, {
+      keterangan,
+      jumlah,
+      tipe,
+      kategori,
+      createdAt: new Date(),
+    });
+    transactionForm.reset();
+    alert("Transaksi berhasil ditambahkan!");
+  };
+}
+
+// --- DAFTAR TRANSAKSI REALTIME ---
+const transactionList = document.getElementById("transaction-list");
+const totalPendapatanEl = document.getElementById("total-pendapatan");
+const totalPengeluaranEl = document.getElementById("total-pengeluaran");
+const saldoAkhirEl = document.getElementById("saldo-akhir");
+
+function renderTransactionList(transactions) {
+  transactionList.innerHTML = "";
+  if (transactions.length === 0) {
+    transactionList.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Belum ada transaksi.</td></tr>`;
+    return;
+  }
+  transactions.forEach((t) => {
+    const item = document.createElement("tr");
+    const isPendapatan = t.tipe === "pendapatan";
+    item.innerHTML = `
+      <td class="px-6 py-4"><div class="text-sm font-medium text-gray-900">${
+        t.keterangan
+      }</div></td>
+      <td class="px-6 py-4"><span class="text-sm font-semibold ${
+        isPendapatan ? "text-green-600" : "text-red-600"
+      }">${isPendapatan ? "+" : "-"} ${formatRupiah(t.jumlah)}</span></td>
+      <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+        isPendapatan
+          ? "bg-green-100 text-green-800"
+          : "bg-yellow-100 text-yellow-800"
+      }">${t.kategori}</span></td>
+      <td class="px-6 py-4"><button data-id="${
+        t.id
+      }" class="remove-btn text-red-500 hover:text-red-700">Hapus</button></td>
+    `;
+    transactionList.appendChild(item);
+  });
+}
+
+function updateSummary(transactions) {
+  const pendapatan = transactions
+    .filter((t) => t.tipe === "pendapatan")
+    .reduce((acc, t) => acc + t.jumlah, 0);
+  const pengeluaran = transactions
+    .filter((t) => t.tipe === "pengeluaran")
+    .reduce((acc, t) => acc + t.jumlah, 0);
+  totalPendapatanEl.innerText = formatRupiah(pendapatan);
+  totalPengeluaranEl.innerText = formatRupiah(pengeluaran);
+  saldoAkhirEl.innerText = formatRupiah(pendapatan - pengeluaran);
+}
+
+function formatRupiah(angka) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(angka);
+}
+
+function setupTransactionListener() {
+  if (!currentUser) return;
+  const transaksiCol = collection(db, `users/${currentUser.uid}/transactions`);
+  onSnapshot(transaksiCol, (querySnapshot) => {
+    const transactions = [];
+    querySnapshot.forEach((doc) => {
+      transactions.push({ id: doc.id, ...doc.data() });
+    });
+    // Urutkan terbaru di atas
+    transactions.sort(
+      (a, b) =>
+        (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)
+    );
+    renderTransactionList(transactions);
+    updateSummary(transactions);
+    // TODO: update chart jika ada
+  });
+}
+
+// Hapus transaksi
+if (transactionList) {
+  transactionList.addEventListener("click", (e) => {
+    if (e.target.classList.contains("remove-btn")) {
+      const id = e.target.dataset.id;
+      if (confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) {
+        const transaksiCol = collection(
+          db,
+          `users/${currentUser.uid}/transactions`
+        );
+        const docRef = doc(transaksiCol, id);
+        deleteDoc(docRef);
+      }
+    }
+  });
+}
