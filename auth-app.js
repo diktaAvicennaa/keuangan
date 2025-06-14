@@ -184,11 +184,52 @@ function renderTransactionList(transactions) {
   });
 }
 
-function updateSummary(transactions) {
-  const pendapatan = transactions
+// Tambah filter UI
+document.addEventListener("DOMContentLoaded", () => {
+  const chartCard = expenseChartCanvas?.closest(".bg-white");
+  if (chartCard && !document.getElementById("chart-range")) {
+    const select = document.createElement("select");
+    select.id = "chart-range";
+    select.className = "mb-4 px-2 py-1 border rounded text-sm float-right";
+    select.innerHTML = `
+      <option value="all">Semua</option>
+      <option value="day">Hari ini</option>
+      <option value="week">Minggu ini</option>
+      <option value="month">Bulan ini</option>
+      <option value="year">Tahun ini</option>
+    `;
+    chartCard.insertBefore(select, chartCard.firstChild);
+  }
+});
+
+// Tambah filter UI untuk ringkasan
+const summaryCard = document.querySelector(
+  ".bg-white.p-6.rounded-2xl.shadow-md"
+);
+if (summaryCard && !document.getElementById("summary-range")) {
+  const select = document.createElement("select");
+  select.id = "summary-range";
+  select.className = "mb-4 px-2 py-1 border rounded text-sm float-right";
+  select.innerHTML = `
+    <option value="all">Semua</option>
+    <option value="day">Hari ini</option>
+    <option value="week">Minggu ini</option>
+    <option value="month">Bulan ini</option>
+    <option value="year">Tahun ini</option>
+  `;
+  summaryCard.insertBefore(select, summaryCard.firstChild);
+}
+
+let lastTransactions = [];
+let lastRange = "all";
+let lastSummaryRange = "all";
+
+function updateSummary(transactions, range = "all") {
+  const filtered = filterTransactionsByRange(transactions, range);
+  const pendapatan = filtered
     .filter((t) => t.tipe === "pendapatan")
     .reduce((acc, t) => acc + t.jumlah, 0);
-  const pengeluaran = transactions
+  const pengeluaran = filtered
     .filter((t) => t.tipe === "pengeluaran")
     .reduce((acc, t) => acc + t.jumlah, 0);
   totalPendapatanEl.innerText = formatRupiah(pendapatan);
@@ -196,30 +237,50 @@ function updateSummary(transactions) {
   saldoAkhirEl.innerText = formatRupiah(pendapatan - pengeluaran);
 }
 
-function formatRupiah(angka) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(angka);
+// Filter helper
+function filterTransactionsByRange(transactions, range) {
+  const now = new Date();
+  return transactions.filter((t) => {
+    if (!t.createdAt) return false;
+    const date = t.createdAt.toDate
+      ? t.createdAt.toDate()
+      : new Date(t.createdAt);
+    if (range === "all") return true;
+    if (range === "day") {
+      return date.toDateString() === now.toDateString();
+    }
+    if (range === "week") {
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      return date >= startOfWeek && date <= endOfWeek;
+    }
+    if (range === "month") {
+      return (
+        date.getMonth() === now.getMonth() &&
+        date.getFullYear() === now.getFullYear()
+      );
+    }
+    if (range === "year") {
+      return date.getFullYear() === now.getFullYear();
+    }
+    return true;
+  });
 }
 
-// --- CHART.JS GRAFIK PENGELUARAN ---
-let expenseChart = null;
-const expenseChartCanvas = document.getElementById("expense-chart");
-
-function updateExpenseChart(transactions) {
+function updateExpenseChart(transactions, range = "all") {
   if (!expenseChartCanvas) return;
-  // Filter hanya pengeluaran
-  const pengeluaran = transactions.filter((t) => t.tipe === "pengeluaran");
-  // Hitung total per kategori
+  // Filter sesuai range
+  const filtered = filterTransactionsByRange(transactions, range);
+  // Gabungkan pendapatan & pengeluaran
   const kategoriTotals = {};
-  pengeluaran.forEach((t) => {
-    kategoriTotals[t.kategori] = (kategoriTotals[t.kategori] || 0) + t.jumlah;
+  filtered.forEach((t) => {
+    const key = `${t.kategori} (${t.tipe})`;
+    kategoriTotals[key] = (kategoriTotals[key] || 0) + t.jumlah;
   });
   const labels = Object.keys(kategoriTotals);
   const data = Object.values(kategoriTotals);
-  // Warna default
   const colors = [
     "#f87171",
     "#fbbf24",
@@ -264,6 +325,22 @@ function updateExpenseChart(transactions) {
   }
 }
 
+// Update summary saat filter berubah
+document.addEventListener("change", (e) => {
+  if (e.target && e.target.id === "summary-range") {
+    lastSummaryRange = e.target.value;
+    updateSummary(lastTransactions, lastSummaryRange);
+  }
+});
+
+// Update chart saat filter berubah
+document.addEventListener("change", (e) => {
+  if (e.target && e.target.id === "chart-range") {
+    lastRange = e.target.value;
+    updateExpenseChart(lastTransactions, lastRange);
+  }
+});
+
 function setupTransactionListener() {
   if (!currentUser) return;
   const transaksiCol = collection(db, `users/${currentUser.uid}/transactions`);
@@ -278,9 +355,9 @@ function setupTransactionListener() {
         (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)
     );
     renderTransactionList(transactions);
-    updateSummary(transactions);
-    updateExpenseChart(transactions); // update chart realtime
-    // TODO: update chart jika ada
+    lastTransactions = transactions;
+    updateSummary(transactions, lastSummaryRange);
+    updateExpenseChart(transactions, lastRange);
   });
 }
 
