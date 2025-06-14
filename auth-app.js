@@ -33,8 +33,6 @@ const logoutBtn = document.getElementById("logout-btn");
 const appContent = document.querySelector(".max-w-7xl");
 const loadingOverlay = document.getElementById("loading-overlay");
 
-let currentUser = null;
-
 onAuthStateChanged(auth, (user) => {
   if (loadingOverlay) loadingOverlay.style.display = "none";
   if (user) {
