@@ -19,16 +19,16 @@ import {
   orderBy,
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
-// --- PENTING: Ganti dengan konfigurasi proyek Firebase Anda ---
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyBAdKlekDsHUe1n8BL9rjxZFZjmbAh9_ro",
-  authDomain: "keuangan-saya-620fd.firebaseapp.com",
-  projectId: "keuangan-saya-620fd",
-  storageBucket: "keuangan-saya-620fd.appspot.com",
-  messagingSenderId: "807499290917",
-  appId: "1:807499290917:web:3232b5b35235f6fcb6e2cc",
-  measurementId: "G-SL1ER5MLNL",
-};
+    apiKey: "AIzaSyBAdKlekDsHUe1n8BL9rjxZFZjmbAh9_ro",
+    authDomain: "keuangan-saya-620fd.firebaseapp.com",
+    projectId: "keuangan-saya-620fd",
+    storageBucket: "keuangan-saya-620fd.firebasestorage.app",
+    messagingSenderId: "807499290917",
+    appId: "1:807499290917:web:3232b5b35235f6fcb6e2cc",
+    measurementId: "G-SL1ER5MLNL"
+  };
 
 // --- Inisialisasi Firebase & Layanannya ---
 const app = initializeApp(firebaseConfig);
