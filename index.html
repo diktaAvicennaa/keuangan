@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pencatat Keuangan Online</title>
@@ -8,306 +8,218 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Heroicons for UI icons -->
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
     <style>
+      /* --- Custom Properties for Theming --- */
+      :root {
+        --bg-color: #f4f7fe;
+        --card-bg-color: rgba(255, 255, 255, 0.6);
+        --primary-text: #1a202c;
+        --secondary-text: #718096;
+        --accent-color: #4A55E7;
+        --accent-hover: #3c46d5;
+        --border-color: rgba(226, 232, 240, 0.7);
+        --shadow-color-light: rgba(255, 255, 255, 0.8);
+        --shadow-color-dark: rgba(163, 177, 198, 0.3);
+      }
+
       body {
         font-family: "Inter", sans-serif;
-        background-color: #f3f4f6;
+        background-color: var(--bg-color);
+        color: var(--primary-text);
         display: flex;
         flex-direction: column;
         min-height: 100vh;
       }
+      
       .main-content {
         flex-grow: 1;
       }
+
+      /* --- Glassmorphism Card Style --- */
+      .card {
+        background: var(--card-bg-color);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        box-shadow: 5px 5px 15px var(--shadow-color-dark), -5px -5px 15px var(--shadow-color-light);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        transition: all 0.3s ease-in-out;
+      }
+
+      /* --- Login Screen Styling --- */
+      #auth-screen {
+        background: url('https://images.unsplash.com/photo-1554147090-e1221a04a025?q=80&w=2070&auto=format&fit=crop') no-repeat center center/cover;
+      }
+      #login-card {
+         background: rgba(255, 255, 255, 0.2);
+         backdrop-filter: blur(20px);
+         -webkit-backdrop-filter: blur(20px);
+         border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      /* --- Interactive Elements --- */
+      .btn-primary {
+        background-color: var(--accent-color);
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      }
+      .btn-primary:hover {
+        background-color: var(--accent-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 7px 14px rgba(0,0,0,0.1);
+      }
+      .form-input {
+         background-color: #edf2f7;
+         border: 2px solid transparent;
+         border-radius: 0.5rem;
+         transition: all 0.2s ease;
+      }
+      .form-input:focus {
+        background-color: white;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 3px rgba(74, 85, 231, 0.2);
+      }
+
+      /* --- Loading Spinner --- */
       .loader {
-        border: 5px solid #f3f3f3;
+        border: 5px solid rgba(255, 255, 255, 0.2);
         border-radius: 50%;
-        border-top: 5px solid #3498db;
-        width: 50px;
-        height: 50px;
-        animation: spin 1s linear infinite;
+        border-top: 5px solid var(--accent-color);
+        width: 60px;
+        height: 60px;
+        animation: spin 1.2s linear infinite;
       }
       @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
       }
     </style>
-  </head>
-  <body class="p-4 md:p-8">
+</head>
+<body class="antialiased">
     <!-- Loading overlay -->
-    <div
-      id="loading-overlay"
-      class="fixed inset-0 bg-gray-800 bg-opacity-75 flex flex-col items-center justify-center z-50"
-    >
+    <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-60 flex flex-col items-center justify-center z-50">
       <div class="loader"></div>
-      <p class="text-white text-lg mt-4">Menghubungkan ke server...</p>
+      <p class="text-white text-lg mt-4 font-semibold">Menghubungkan...</p>
     </div>
 
-    <!-- Form Login (ditampilkan saat belum login) -->
-    <div
-      id="auth-screen"
-      class="min-h-screen flex flex-col items-center justify-center bg-gray-100"
-    >
-      <div
-        class="bg-white p-8 rounded-2xl shadow-lg text-center max-w-sm mx-auto"
-      >
-        <h1 class="text-2xl font-bold text-gray-800 mb-2">Masuk</h1>
-        <button
-          id="login-btn"
-          class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300 flex items-center justify-center gap-3"
-        >
-          <svg
-            class="w-6 h-6"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 48 48"
-          >
-            <path
-              fill="#FFC107"
-              d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"
-            ></path>
-            <path
-              fill="#FF3D00"
-              d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"
-            ></path>
-            <path
-              fill="#4CAF50"
-              d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.222,0-9.519-3.536-11.088-8.294l-6.522,5.025C9.505,39.556,16.227,44,24,44z"
-            ></path>
-            <path
-              fill="#1976D2"
-              d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C39.99,36.548,44,31.016,44,24C44,22.659,43.862,21.35,43.611,20.083z"
-            ></path>
-          </svg>
-          Login dengan Google
-        </button>
-      </div>
-    </div>
-
-    <!-- Konten Aplikasi Utama (ditampilkan setelah login) -->
-    <div id="app-container" class="main-content" style="display: none">
-      <header class="bg-white p-4 rounded-xl shadow-md mb-8">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <button
-              id="logout-btn"
-              class="bg-red-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-red-700 transition-colors"
-            >
-              Logout
+    <!-- Form Login -->
+    <div id="auth-screen" class="min-h-screen w-full flex flex-col items-center justify-center p-4">
+        <div id="login-card" class="p-8 md:p-12 rounded-2xl shadow-2xl text-center w-full max-w-md">
+            <h1 class="text-4xl font-bold text-white mb-3">KeuanganKu</h1>
+            <p class="text-gray-200 mb-8">Kelola keuangan Anda dengan lebih cerdas.</p>
+            <button id="login-btn" class="btn-primary w-full py-3 px-4 flex items-center justify-center gap-3">
+                <ion-icon name="logo-google" class="text-xl"></ion-icon>
+                Masuk dengan Google
             </button>
-            <div>
-              <h1 class="text-xl font-bold text-gray-800">
-                Pencatat Keuangan Online
-              </h1>
-              <p id="user-id-display" class="text-gray-500 text-xs break-all">
-                ID Pengguna Anda: <span class="font-semibold">memuat...</span>
-              </p>
-            </div>
-          </div>
         </div>
-      </header>
-
-      <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Kolom Kiri: Input & Ringkasan -->
-        <div class="lg:col-span-1 flex flex-col gap-8">
-          <div class="bg-white p-6 rounded-2xl shadow-md">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Ringkasan</h2>
-            <div class="space-y-4">
-              <div
-                class="flex justify-between items-center p-4 bg-green-50 rounded-lg"
-              >
-                <span class="font-medium text-green-800">Pendapatan</span>
-                <span
-                  id="total-pendapatan"
-                  class="font-bold text-lg text-green-600"
-                  >Rp 0</span
-                >
-              </div>
-              <div
-                class="flex justify-between items-center p-4 bg-red-50 rounded-lg"
-              >
-                <span class="font-medium text-red-800">Pengeluaran</span>
-                <span
-                  id="total-pengeluaran"
-                  class="font-bold text-lg text-red-600"
-                  >Rp 0</span
-                >
-              </div>
-              <div
-                class="flex justify-between items-center p-4 bg-blue-50 rounded-lg"
-              >
-                <span class="font-medium text-blue-800">Saldo Akhir</span>
-                <span id="saldo-akhir" class="font-bold text-lg text-blue-600"
-                  >Rp 0</span
-                >
-              </div>
+    </div>
+    
+    <!-- Konten Aplikasi Utama -->
+    <div id="app-container" class="main-content p-4 md:p-8" style="display: none;">
+        <header class="mb-8">
+            <div class="flex items-center justify-between max-w-7xl mx-auto">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Dashboard</h1>
+                    <p id="user-id-display" class="text-gray-500 text-xs md:text-sm break-all">
+                        ID Pengguna: <span class="font-semibold">memuat...</span>
+                    </p>
+                </div>
+                <button id="logout-btn" class="btn-primary flex items-center gap-2 !py-2 !px-4 text-sm">
+                    <ion-icon name="log-out-outline"></ion-icon>
+                    Logout
+                </button>
             </div>
-          </div>
+        </header>
 
-          <div class="bg-white p-6 rounded-2xl shadow-md">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">
-              Tambah Transaksi Baru
-            </h2>
-            <!-- 👇 KONTEN FORM DIKEMBALIKAN 👇 -->
-            <form id="transaction-form" class="space-y-4">
-              <div>
-                <label
-                  for="keterangan"
-                  class="block text-sm font-medium text-gray-600"
-                  >Keterangan</label
-                >
-                <input
-                  type="text"
-                  id="keterangan"
-                  placeholder="Contoh: Gaji bulanan"
-                  class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  for="jumlah"
-                  class="block text-sm font-medium text-gray-600"
-                  >Jumlah (Rp)</label
-                >
-                <input
-                  type="number"
-                  id="jumlah"
-                  placeholder="Contoh: 5000000"
-                  class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  for="tipe"
-                  class="block text-sm font-medium text-gray-600"
-                  >Tipe Transaksi</label
-                >
-                <select
-                  id="tipe"
-                  class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="pendapatan">Pendapatan</option>
-                  <option value="pengeluaran">Pengeluaran</option>
-                </select>
-              </div>
-              <div>
-                <label
-                  for="kategori"
-                  class="block text-sm font-medium text-gray-600"
-                  >Kategori</label
-                >
-                <select
-                  id="kategori"
-                  class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                ></select>
-              </div>
-              <button
-                type="submit"
-                class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-300"
-              >
-                Tambahkan
-              </button>
-            </form>
-            <!-- 👆 KONTEN FORM DIKEMBALIKAN 👆 -->
-          </div>
+        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Kolom Kiri -->
+            <div class="lg:col-span-1 flex flex-col gap-8">
+                <div class="card">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Ringkasan</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-center p-4 bg-green-100/50 rounded-lg">
+                             <div class="p-3 bg-green-200 rounded-full mr-4"><ion-icon name="arrow-up-outline" class="text-2xl text-green-700"></ion-icon></div>
+                            <div>
+                                <span class="font-medium text-green-800">Total Pendapatan</span>
+                                <span id="total-pendapatan" class="block font-bold text-2xl text-green-600">Rp 0</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-4 bg-red-100/50 rounded-lg">
+                             <div class="p-3 bg-red-200 rounded-full mr-4"><ion-icon name="arrow-down-outline" class="text-2xl text-red-700"></ion-icon></div>
+                            <div>
+                                <span class="font-medium text-red-800">Total Pengeluaran</span>
+                                <span id="total-pengeluaran" class="block font-bold text-2xl text-red-600">Rp 0</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-4 bg-blue-100/50 rounded-lg border-t-2 border-blue-200">
+                             <div class="p-3 bg-blue-200 rounded-full mr-4"><ion-icon name="wallet-outline" class="text-2xl text-blue-700"></ion-icon></div>
+                            <div>
+                                <span class="font-medium text-blue-800">Saldo Akhir</span>
+                                <span id="saldo-akhir" class="block font-bold text-2xl text-blue-600">Rp 0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-          <div class="bg-white p-4 rounded-2xl shadow-md">
-            <h2 class="text-lg font-semibold text-gray-700 mb-2">
-              Manajemen Kategori
-            </h2>
-            <!-- 👇 KONTEN FORM DIKEMBALIKAN 👇 -->
-            <form id="add-category-form" class="flex gap-2 mb-4">
-              <input
-                type="text"
-                id="new-category"
-                placeholder="Nama kategori baru"
-                class="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-              <button
-                type="submit"
-                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-              >
-                Tambah
-              </button>
-            </form>
-            <div
-              id="category-list"
-              class="mt-2 text-sm text-gray-600 flex flex-wrap gap-2"
-            ></div>
-            <!-- 👆 KONTEN FORM DIKEMBALIKAN 👆 -->
-          </div>
+                <div class="card">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Transaksi Baru</h2>
+                    <form id="transaction-form" class="space-y-4">
+                        <input type="text" id="keterangan" placeholder="Keterangan (misal: Gaji, Makan siang)" class="form-input w-full p-3" required />
+                        <input type="number" id="jumlah" placeholder="Jumlah (misal: 50000)" class="form-input w-full p-3" required />
+                        <select id="tipe" class="form-input w-full p-3">
+                            <option value="pengeluaran">Pengeluaran</option>
+                            <option value="pendapatan">Pendapatan</option>
+                        </select>
+                        <select id="kategori" class="form-input w-full p-3"></select>
+                        <button type="submit" class="btn-primary w-full">Tambahkan Transaksi</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Manajemen Kategori</h2>
+                    <form id="add-category-form" class="flex gap-2 mb-4">
+                        <input type="text" id="new-category" placeholder="Kategori baru" class="form-input flex-1 p-2" required />
+                        <button type="submit" class="btn-primary !py-2 !px-4 text-sm">Tambah</button>
+                    </form>
+                    <div id="category-list" class="flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+
+            <!-- Kolom Kanan -->
+            <div class="lg:col-span-2 flex flex-col gap-8">
+                <div class="card">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Riwayat Transaksi</h2>
+                    <div class="overflow-auto max-h-[500px]">
+                        <table class="min-w-full">
+                            <tbody id="transaction-list" class="divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Grafik Pengeluaran</h2>
+                    <div class="w-full h-80 flex items-center justify-center">
+                        <canvas id="expense-chart"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <div class="lg:col-span-2 flex flex-col gap-8">
-          <div class="bg-white p-6 rounded-2xl shadow-md">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">
-              Riwayat Transaksi
-            </h2>
-            <div class="overflow-x-auto max-h-[400px]">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th
-                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Keterangan
-                    </th>
-                    <th
-                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Jumlah
-                    </th>
-                    <th
-                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Kategori
-                    </th>
-                    <th
-                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Aksi
-                    </th>
-                  </tr>
-                </thead>
-                <tbody
-                  id="transaction-list"
-                  class="bg-white divide-y divide-gray-200"
-                >
-                  <!-- Data transaksi akan muncul di sini -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="bg-white p-6 rounded-2xl shadow-md">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">
-              Grafik Komposisi Pengeluaran
-            </h2>
-            <div class="w-full h-64 md:h-80 flex items-center justify-center">
-              <canvas id="expense-chart"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
-    <footer class="mt-12 text-center text-gray-500 text-sm">
-      <div class="max-w-4xl mx-auto py-4 border-t border-gray-200">
-        <p>&copy; 2025 Pencatat Keuangan Online. Seluruh Hak Cipta.</p>
-        <p class="mt-2">@dimas_Ark</p>
-      </div>
+    <footer class="mt-12 text-center text-gray-500 text-sm p-4">
+        <p>&copy; 2025 KeuanganKu. Dibuat dengan ❤️</p>
     </footer>
 
     <script type="module" src="js/main.js"></script>
-  </body>
+</body>
 </html>
