@@ -184,11 +184,11 @@ function renderTransactionList(transactions) {
   });
 }
 
+let expenseChartCanvas;
 // Pastikan expenseChartCanvas dideklarasikan di paling atas sebelum dipakai
-const expenseChartCanvas = document.getElementById("expense-chart");
-
-// Tambah filter UI
 document.addEventListener("DOMContentLoaded", () => {
+  expenseChartCanvas = document.getElementById("expense-chart");
+  // --- filter grafik ---
   const chartCard = expenseChartCanvas?.closest(".bg-white");
   if (chartCard && !document.getElementById("chart-range")) {
     const select = document.createElement("select");
@@ -203,25 +203,24 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
     chartCard.insertBefore(select, chartCard.firstChild);
   }
+  // --- filter ringkasan ---
+  const summaryCard = document.querySelector(
+    ".bg-white.p-6.rounded-2xl.shadow-md"
+  );
+  if (summaryCard && !document.getElementById("summary-range")) {
+    const select = document.createElement("select");
+    select.id = "summary-range";
+    select.className = "mb-4 px-2 py-1 border rounded text-sm float-right";
+    select.innerHTML = `
+      <option value="all">Semua</option>
+      <option value="day">Hari ini</option>
+      <option value="week">Minggu ini</option>
+      <option value="month">Bulan ini</option>
+      <option value="year">Tahun ini</option>
+    `;
+    summaryCard.insertBefore(select, summaryCard.firstChild);
+  }
 });
-
-// Tambah filter UI untuk ringkasan
-const summaryCard = document.querySelector(
-  ".bg-white.p-6.rounded-2xl.shadow-md"
-);
-if (summaryCard && !document.getElementById("summary-range")) {
-  const select = document.createElement("select");
-  select.id = "summary-range";
-  select.className = "mb-4 px-2 py-1 border rounded text-sm float-right";
-  select.innerHTML = `
-    <option value="all">Semua</option>
-    <option value="day">Hari ini</option>
-    <option value="week">Minggu ini</option>
-    <option value="month">Bulan ini</option>
-    <option value="year">Tahun ini</option>
-  `;
-  summaryCard.insertBefore(select, summaryCard.firstChild);
-}
 
 let lastTransactions = [];
 let lastRange = "all";
