@@ -21,12 +21,13 @@ import {
 
 // --- PENTING: Ganti dengan konfigurasi proyek Firebase Anda ---
 const firebaseConfig = {
-  apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXX",
-  authDomain: "nama-proyek-anda.firebaseapp.com",
-  projectId: "nama-proyek-anda",
-  storageBucket: "nama-proyek-anda.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1:1234567890:web:xxxxxxxxxxxxxx",
+  apiKey: "AIzaSyBAdKlekDsHUe1n8BL9rjxZFZjmbAh9_ro",
+  authDomain: "keuangan-saya-620fd.firebaseapp.com",
+  projectId: "keuangan-saya-620fd",
+  storageBucket: "keuangan-saya-620fd.appspot.com",
+  messagingSenderId: "807499290917",
+  appId: "1:807499290917:web:3232b5b35235f6fcb6e2cc",
+  measurementId: "G-SL1ER5MLNL",
 };
 
 // --- Inisialisasi Firebase & Layanannya ---
@@ -282,10 +283,4 @@ transactionList.addEventListener("click", (e) => {
 });
 
 // --- Aturan Keamanan Firestore ---
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
-    }
-  }
-}
+// Hapus aturan Firestore di bawah ini, karena harus diatur di Firebase Console, bukan di file JS.
